@@ -218,6 +218,29 @@ export interface ProductView {
   viewed_at: string;
 }
 
+export interface Admin {
+  id: string;
+  user_id: string;
+  is_super: boolean;
+  created_at: string;
+}
+
+export interface Report {
+  id: string;
+  reporter_user_id: string;
+  category: string;
+  subject: string;
+  description: string;
+  priority: string;
+  status: string;
+  reported_seller_id: string | null;
+  reported_product_id: string | null;
+  order_id: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FeaturedListing {
   id: string;
   product_id: string;

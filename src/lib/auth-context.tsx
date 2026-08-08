@@ -7,6 +7,7 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   seller: Seller | null;
+  isAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [seller, setSeller] = useState<Seller | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function fetchSeller(userId: string) {
@@ -30,11 +32,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSeller(data as Seller | null);
   }
 
+  async function checkAdmin(userId: string) {
+    const { data } = await supabase.rpc('is_admin');
+    setIsAdmin(!!data);
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       if (data.session?.user) {
-        fetchSeller(data.session.user.id).finally(() => setLoading(false));
+        Promise.all([
+          fetchSeller(data.session.user.id),
+          checkAdmin(data.session.user.id),
+        ]).finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -44,8 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
       if (newSession?.user) {
         fetchSeller(newSession.user.id);
+        checkAdmin(newSession.user.id);
       } else {
         setSeller(null);
+        setIsAdmin(false);
       }
     });
 
@@ -65,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     await supabase.auth.signOut();
     setSeller(null);
+    setIsAdmin(false);
   }
 
   async function refreshSeller() {
@@ -72,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, seller, loading, signIn, signUp, signOut, refreshSeller }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, seller, isAdmin, loading, signIn, signUp, signOut, refreshSeller }}>
       {children}
     </AuthContext.Provider>
   );

@@ -19,6 +19,11 @@ import SellerDashboard from '@/pages/seller/SellerDashboard';
 import SellerProducts from '@/pages/seller/SellerProducts';
 import SellerOrders from '@/pages/seller/SellerOrders';
 import SellerStorePage from '@/pages/SellerStorePage';
+import AdminLayout from '@/pages/admin/AdminLayout';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import AdminSellers from '@/pages/admin/AdminSellers';
+import AdminProducts from '@/pages/admin/AdminProducts';
+import AdminReports from '@/pages/admin/AdminReports';
 
 export default function App() {
   return (
@@ -44,6 +49,13 @@ export default function App() {
                 <Route path="/seller/products" element={<SellerProducts />} />
                 <Route path="/seller/orders" element={<SellerOrders />} />
                 <Route path="/seller/payouts" element={<SellerPayouts />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="sellers" element={<AdminSellers />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="reports" element={<AdminReports />} />
+                </Route>
               </Route>
             </Routes>
           </CartProvider>

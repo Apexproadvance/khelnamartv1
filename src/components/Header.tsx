@@ -9,7 +9,7 @@ import NotificationBell from '@/components/NotificationBell';
 
 export default function Header() {
   const { count } = useCart();
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -33,6 +33,9 @@ export default function Header() {
               <Store size={12} />
               Sell on Khelnamart
             </RouterLink>
+            {isAdmin && (
+              <RouterLink to="/admin" className="hover:text-secondary-300">Admin Panel</RouterLink>
+            )}
             {user ? (
               <button onClick={signOut} className="hover:text-secondary-300">Sign out</button>
             ) : (
@@ -154,6 +157,7 @@ export default function Header() {
                 <RouterLink to="/wishlist" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-primary-50">Wishlist</RouterLink>
                 <RouterLink to="/orders" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-primary-50">My Orders</RouterLink>
                 <RouterLink to="/seller" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-primary-50">Seller Portal</RouterLink>
+                {isAdmin && <RouterLink to="/admin" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-primary-50">Admin Panel</RouterLink>}
                 <button onClick={() => { signOut(); setMobileOpen(false); }} className="rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-primary-50">Sign out</button>
               </>
             ) : (
