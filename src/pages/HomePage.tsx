@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import type { ProductCatalog, Category } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
 import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 import {
   Blocks, Heart, Car, Baby, Dices, Palette,
-  GraduationCap, Users, Bike, Music, ArrowRight, Sparkles, TrendingUp, Clock,
+  GraduationCap, Users, Bike, Music, ArrowRight, Sparkles, TrendingUp, Clock, History,
 } from 'lucide-react';
 
 const iconMap: Record<string, typeof Blocks> = {
@@ -14,9 +15,11 @@ const iconMap: Record<string, typeof Blocks> = {
 };
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [featured, setFeatured] = useState<ProductCatalog[]>([]);
   const [newArrivals, setNewArrivals] = useState<ProductCatalog[]>([]);
   const [trending, setTrending] = useState<ProductCatalog[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<ProductCatalog[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,10 +47,33 @@ export default function HomePage() {
       setNewArrivals(newRes.data as ProductCatalog[] ?? []);
       setTrending(trendRes.data as ProductCatalog[] ?? []);
       setCategories(catRes.data as Category[] ?? []);
+
+      // Load recently viewed products for signed-in users
+      if (user) {
+        const { data: views } = await supabase
+          .from('product_views')
+          .select('product_id, viewed_at')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(10);
+
+        const viewedIds = [...new Set((views ?? []).map((v: { product_id: string }) => v.product_id))].slice(0, 4);
+        if (viewedIds.length > 0) {
+          const { data: viewedProducts } = await supabase
+            .from('product_catalog')
+            .select('*, product_images(*), categories(*), products(*, sellers(*))')
+            .in('id', viewedIds)
+            .eq('is_active', true);
+          // Preserve view order
+          const viewedMap = new Map((viewedProducts as ProductCatalog[] ?? []).map((p) => [p.id, p]));
+          setRecentlyViewed(viewedIds.map((id) => viewedMap.get(id)).filter((p): p is ProductCatalog => p != null));
+        }
+      }
+
       setLoading(false);
     }
     load();
-  }, []);
+  }, [user]);
 
   return (
     <div className="animate-fade-in">
@@ -173,6 +199,21 @@ export default function HomePage() {
             : newArrivals.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
       </section>
+
+      {/* Recently viewed */}
+      {recentlyViewed.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-10">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="text-primary-500" size={24} />
+              <h2 className="text-2xl font-bold text-slate-800">Recently Viewed</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {recentlyViewed.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </section>
+      )}
 
       {/* Seller CTA */}
       <section className="mx-auto max-w-7xl px-4 py-12">

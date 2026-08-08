@@ -37,6 +37,7 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [saveNewAddress, setSaveNewAddress] = useState(false);
 
   useEffect(() => {
     if (!user) navigate('/auth');
@@ -87,6 +88,21 @@ export default function CheckoutPage() {
     if (items.length === 0) return;
 
     setPlacing(true);
+
+    // Save address if requested
+    if (saveNewAddress && user) {
+      const label = addresses.length === 0 ? 'Home' : 'Other';
+      await supabase.from('addresses').insert({
+        user_id: user.id,
+        label,
+        name: shipping.name,
+        phone: shipping.phone,
+        address_line: shipping.address,
+        city: shipping.city,
+        is_default: addresses.length === 0,
+      });
+    }
+
     const orderNumber = generateOrderNumber();
 
     const { data: order, error } = await supabase
@@ -223,6 +239,10 @@ export default function CheckoutPage() {
                 </select>
               </div>
             </div>
+            <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={saveNewAddress} onChange={(e) => setSaveNewAddress(e.target.checked)} className="h-4 w-4 rounded text-primary-600" />
+              Save this address for next time
+            </label>
           </div>
 
           {/* Delivery method */}
